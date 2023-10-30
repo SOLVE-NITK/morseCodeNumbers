@@ -276,7 +276,7 @@ document.getElementById("displayArea").textContent = "Selected number: 0";
                     <div style="display: flex; align-items: center;">
                         <button style="width: 60px; height: 60px; border-width: 4px; font-size: 36px;margin-right: 50px;margin-left: 100px;border-radius: 12px;" id="displayButton"></button>
                     
-                        <button style="border-radius: 50%;background-color:rgb(224, 223, 223);color:rgb(32, 32, 32);margin-left: 100px;padding: 15px 15px;font-weight:bold;" onclick="convertAndPlay()"><i class="fa fa-play" style="font-size:18px"></i><br>Play</button>
+                        <button style="border-radius: 50%;background-color:rgb(224, 223, 223);color:rgb(32, 32, 32);margin-left: 100px;padding: 15px 15px;font-weight:bold;" onclick="convertAndPlay()" id="playButton"><i class="fa fa-play" style="font-size:18px"></i><br>Play</button>
                         
                         <span id="output" style="font-size: 48px;margin-right: 50px;margin-left: 100px;"></span>
                     </div>
@@ -302,35 +302,50 @@ document.getElementById("displayArea").textContent = "Selected number: 0";
 };
 
 var morseCode = "";
-
+var isPlaying = false;
 function convertAndPlay() {
-    var numbers = document.getElementById("textInput").value.split("");
-    var output = document.getElementById("output");
-    output.innerHTML = "";
-    
-    morseCode = numbers.map(num => numToMorse[num]).join("");
-    
-    var context = new AudioContext();
-    
-    morseCode.split("").forEach(function(symbol, index) {
-        setTimeout(function() {
-            output.innerHTML += symbol;
-            
-            var oscillator = context.createOscillator();
-            oscillator.frequency.value = 600;
-            oscillator.connect(context.destination);
-            oscillator.start();
-            
-            if (symbol === ".") {
-                setTimeout(function() { oscillator.stop(); }, 100);
-            } else if (symbol === "-") {
-                setTimeout(function() { oscillator.stop(); }, 300);
+            if (isPlaying) {
+                return; // Do nothing if already playing
             }
-        }, index * 800);
-    });
-    setTimeout(function(){ document.getElementById("reset").style.visibility="visible";}, 4000)
-    
-}
+
+            isPlaying = true;
+            var numbers = document.getElementById("textInput").value.split("");
+            var output = document.getElementById("output");
+            output.innerHTML = "";
+
+            morseCode = numbers.map(num => numToMorse[num]).join("");
+            var context = new AudioContext();
+
+            morseCode.split("").forEach(function(symbol, index) {
+                setTimeout(function() {
+                    output.innerHTML += symbol;
+
+                    var oscillator = context.createOscillator();
+                    oscillator.frequency.value = 600;
+                    oscillator.connect(context.destination);
+                    oscillator.start();
+
+                    if (symbol === ".") {
+                        setTimeout(function() { oscillator.stop(); }, 100);
+                    } else if (symbol === "-") {
+                        setTimeout(function() { oscillator.stop(); }, 300);
+                    }
+
+                    // Enable the play button when playback is finished
+                    if (index === morseCode.length - 1) {
+                        setTimeout(function() {
+                            isPlaying = false;
+                            document.getElementById("playButton").disabled = false;
+                            document.getElementById("reset").style.visibility = "visible";
+                        }, (index + 1) * 800);
+                    }
+                }, index * 800);
+            });
+
+            // Disable the play button during playback
+            document.getElementById("playButton").disabled = true;
+        }
+
   function displayNumber1() {
       var numberValue = document.getElementById("textInput").value;
       var displayButton = document.getElementById("displayButton");
